@@ -1,49 +1,82 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
+import { AuthRequest } from '../types';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<AuthRequest>();
+    const response = context.switchToHttp().getResponse<Response>();
 
-    // Extract tokens
-    const authHeader = request.headers['authorization'];
+    const accessToken = this.extractTokenFromHeader(request);
     const refreshToken = request.cookies?.refreshToken;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ') || !refreshToken) {
-      throw new UnauthorizedException('Access or Refresh token missing');
+    // Step 1: Verify Access Token
+    if (accessToken) {
+      try {
+        const accessPayload = this.jwtService.verify(accessToken, {
+          secret: process.env.JWT_ACCESS_SECRET,
+        });
+        request.user = accessPayload; // Add payload to req.user
+        request.accessToken = accessToken; // Add access token to req
+        return true;
+      } catch (error) {
+        if (error.name !== 'TokenExpiredError') {
+          throw new UnauthorizedException('Invalid access token');
+        }
+      }
     }
 
-    const accessToken = authHeader.split(' ')[1];
+    // Step 2: Verify Refresh Token if Access Token is Expired
+    if (refreshToken) {
+      try {
+        const refreshPayload = this.jwtService.verify(refreshToken, {
+          secret: process.env.JWT_REFRESH_SECRET,
+        });
 
-    try {
-      // Verify Access Token
-      const accessPayload = this.jwtService.verify(accessToken, {
-        secret: process.env.ACCESS_TOKEN_SECRET,
-      });
+        // Generate a new access token
+        const newAccessToken = this.jwtService.sign(
+          { ...refreshPayload },
+          { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '15m' }
+        );
 
-      // Verify Refresh Token
-      const refreshPayload = this.jwtService.verify(refreshToken, {
-        secret: process.env.REFRESH_TOKEN_SECRET,
-      });
+        // Generate a new refresh token
+        const newRefreshToken = this.jwtService.sign(
+          { ...refreshPayload },
+          { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '7d' }
+        );
 
-      // Add user information to the request object (optional)
-      request.user = {
-        accessPayload,
-        refreshPayload,
-      };
+        // Clear the previous refresh token
+        response.clearCookie('refreshToken');
 
-      return true;
-    } catch (error) {
-      throw new UnauthorizedException(`Invalid or expired tokens: ${error}`);
+        // Set the new refresh token in the HTTP-only cookie
+        response.cookie('refreshToken', newRefreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+        });
+
+        // Attach new tokens
+        request.user = refreshPayload; // Add payload to req.user
+        request.accessToken = newAccessToken; // Add new access token to req
+
+        return true;
+      } catch (error) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
     }
+
+    throw new UnauthorizedException('Unauthorized access');
+  }
+
+  private extractTokenFromHeader(request: AuthRequest): string | undefined {
+    const authorization = request.headers.authorization;
+    if (!authorization || !authorization.startsWith('Bearer ')) {
+      return undefined;
+    }
+    return authorization.split(' ')[1];
   }
 }

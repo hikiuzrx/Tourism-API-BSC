@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { isEmail, IsNotEmpty, IsString,IsEmail } from 'class-validator';
 
 export class CreateAgenceDto {
   @IsNotEmpty()
@@ -8,4 +8,12 @@ export class CreateAgenceDto {
   @IsNotEmpty()
   @IsString()
   agenceAdress: string;
+
+  @IsNotEmpty()
+  @IsString()
+  password:string
+
+  @IsNotEmpty()
+  @IsEmail()
+  email:string
 }

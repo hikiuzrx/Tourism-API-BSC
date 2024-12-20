@@ -29,6 +29,7 @@ model Club {
   clubId Int @id @default(autoincrement())
   clubName String  @unique
   clubAdress String
+  email String @unique
   password String
   activities Activity[]
   reservations reservationForClub[]
@@ -90,6 +91,8 @@ model Agence {
   agenceId Int @id @default(autoincrement())
   agenceName String @unique
   agenceAdress String
+  email String
+  password String
 }
 model TourismPlan {
   toursimId Int @id @default(autoincrement())
@@ -105,6 +108,7 @@ model Auberge {
   aubergeId Int @id @default(autoincrement())
   name String @unique 
   adress String
+  email String
   password String
   number String[]
   limit Int

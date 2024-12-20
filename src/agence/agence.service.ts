@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
 import { Agence, Prisma } from '@prisma/client';
+import bcrypt from 'bcrypt'
 
 
 @Injectable()
@@ -11,6 +12,8 @@ export class AgenceService {
     if(!existingAgenceName){
       const existingAgenceAdress = await this.dbService.agence.findFirst({where:{agenceAdress:createAgenceDto.agenceAdress}})
       if(!existingAgenceAdress){
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(createAgenceDto.password, salt);
         return await this.dbService.agence.create({data:createAgenceDto})
       }else{
         throw new ConflictException('an Agency with this adress')
@@ -83,4 +86,14 @@ export class AgenceService {
     }
     return await this.dbService.agence.delete({where:{agenceId:id}})
   }
+  retrieveUserByEmail(email: string): Promise<Agence> {
+      return this.dbService.agence.findFirst({
+        where: {
+          email,
+        },
+      });
+    }
+    async comparePassword(agence: Agence, password: string): Promise<boolean> {
+                  return bcrypt.compare(password, agence.password);
+                }
 }

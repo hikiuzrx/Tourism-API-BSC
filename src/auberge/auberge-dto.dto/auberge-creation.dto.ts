@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsInt, Min } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, Min, IsEmail } from 'class-validator';
 
 export class CreateAubergeDto {
   @IsNotEmpty()
@@ -17,4 +17,8 @@ export class CreateAubergeDto {
   @IsInt()
   @Min(1, { message: 'Limit must be at least 1' })
   limit: number;
+
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Invalid email address' })
+  email: string;
 }
