@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User  {
+  userId Int @id @default(autoincrement())
+  name String @unique
+  sexe String
+  dateOfBirth DateTime
+  placeOfBirth String
+  password String
+  number String @unique
+  email String @unique
+  reservationsActivities ReservationActivity[]
+  reservationAuberge ReservationAuberge[]
+}
+model Club {
+  clubId Int @id @default(autoincrement())
+  clubName String  @unique
+  clubAdress String
+  password String
+  activities Activity[]
+  reservations reservationForClub[]
+}
+model Monument {
+  adress String @unique
+  title String
+  description String
+  @@id([title])
+}
+model ReservationActivity {
+  reservationId Int @id @default(autoincrement())
+  user User @relation(fields: [reserver],references: [userId])
+  reserver Int 
+  reservedfor Int 
+  firstName String
+  lastName String
+  activity Activity @relation(fields: [reservedfor],references: [activityId])
+  reservationState ReservationState
+  reservationNature ReservationNature
+}
+model Activity {
+  activityId Int @id @default(autoincrement())
+  club Club @relation(fields: [clubId],references: [clubId])
+  clubId Int
+  duration String
+  title String @unique
+  limit Int
+  adress String
+  date DateTime
+  reservations ReservationActivity[]
+}
+model reservationForClub {
+  rservedfor Int
+  club Club @relation(fields: [rservedfor],references: [clubId])
+  resrveState ReservationState
+  @@id([rservedfor])
+}
+model ReservationAuberge  {
+  reservationId Int @id @default(autoincrement())
+  auberge  Auberge @relation(fields: [reserveFor],references: [aubergeId])
+  reserveTo Int
+  roomNumber Int 
+  reserver User @relation(fields: [reserveTo],references: [userId])
+  reserveFor Int
+  cardId Int 
+  DateOfEnter DateTime
+  DateOfExist DateTime
+  reservationState ReservationState
+  reservationNature ReservationNature
+}
+model Auberge {
+  aubergeId Int @id @default(autoincrement())
+  name String @unique 
+  adress String
+  password String
+  number String[]
+  limit Int
+  reservations ReservationAuberge[]
+}
+enum ReservationState {
+  pending
+  accepted 
+  rejected
+  canceled
+}
+enum ReservationNature {
+  free
+  paid
+}
