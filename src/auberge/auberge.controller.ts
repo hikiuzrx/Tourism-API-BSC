@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { AubergeService } from './auberge.service';
 import { Auberge, Prisma } from '@prisma/client';
+import { ReservationActivity,reservationForClub,ReservationAuberge } from '@prisma/client';
 import { CreateAubergeDto } from './auberge-dto.dto/auberge-creation.dto';
 
 @Controller('auberge')

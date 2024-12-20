@@ -1,3 +1,4 @@
+
 import { Controller, Post, Body, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -19,11 +20,11 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'user logged in successfully' })
   async login(
     @Res() res: Response,
-    @Body() body: { identifier: string; password: string },
+    @Body() body: { email: string; password: string },
   ) {
-    const { identifier, password } = body;
+    const { email, password } = body;
     const authenticationData = await this.authService.login(
-      identifier,
+      email,
       password,
     );
 

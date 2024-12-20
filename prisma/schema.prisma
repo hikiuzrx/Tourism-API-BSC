@@ -33,9 +33,12 @@ model Club {
   activities Activity[]
   reservations reservationForClub[]
 }
-model Monument {
+model TouristiquePlaces {
   adress String @unique
+  type String
   title String
+  planId Int?
+  partOf TourismPlan? @relation(fields: [planId],references: [toursimId])
   description String
   @@id([title])
 }
@@ -57,6 +60,8 @@ model Activity {
   duration String
   title String @unique
   limit Int
+  partOf TourismPlan? @relation(fields: [planId],references: [toursimId])
+  planId Int?
   adress String
   date DateTime
   reservations ReservationActivity[]
@@ -75,10 +80,26 @@ model ReservationAuberge  {
   reserver User @relation(fields: [reserveTo],references: [userId])
   reserveFor Int
   cardId Int 
+  Minor Boolean?
   DateOfEnter DateTime
   DateOfExist DateTime
   reservationState ReservationState
   reservationNature ReservationNature
+}
+model Agence {
+  agenceId Int @id @default(autoincrement())
+  agenceName String @unique
+  agenceAdress String
+}
+model TourismPlan {
+  toursimId Int @id @default(autoincrement())
+  title String 
+  duration String
+  limit Int
+  transporatation Boolean
+  placestoVisit TouristiquePlaces[]
+  activities Activity[]
+
 }
 model Auberge {
   aubergeId Int @id @default(autoincrement())
