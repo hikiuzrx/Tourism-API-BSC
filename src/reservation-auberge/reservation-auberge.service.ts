@@ -1,5 +1,6 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
+
 import { ReservationState, ReservationNature, ReservationAuberge } from '@prisma/client';
 
 @Injectable()
@@ -113,8 +114,51 @@ export class ReservationsAubergeService {
          throw new Error('Invalid field');
      }
    }
-   
+   // services/reservations-auberge.service.ts
 
+   async validateReservation(
+     reservationId: number,
+     newState: 'Accepted' | 'Rejected',
+   ): Promise<ReservationAuberge> {
+     // Fetch the reservation
+     const reservation = await this.prisma.reservationAuberge.findUnique({
+       where: { reservationId },
+     });
+   
+     if (!reservation) {
+       throw new NotFoundException(`Reservation with ID ${reservationId} not found.`);
+     }
+   
+     // Use switch to handle state validation and transition
+     switch (reservation.reservationState) {
+       case ReservationState.pending:
+          let state 
+         if (newState === 'Accepted' || newState === 'Rejected') {
+          if(newState === 'Accepted'){
+               state = ReservationState.accepted
+          }else if (newState === 'Rejected'){
+               state = ReservationState.rejected
+          }else
+           return await this.prisma.reservationAuberge.update({
+             where: { reservationId },
+             data: {
+               reservationState: newState,
+             },
+           });
+         }
+         throw new ConflictException(`Invalid state transition to "${newState}".`);
+   
+       case ReservationState.accepted:
+       case ReservationState.rejected:
+         throw new ConflictException(
+           `Reservation with ID ${reservationId} is already "${reservation.reservationState}".`,
+         );
+   
+       default:
+         throw new Error('Invalid reservation state.');
+     }
+   }
+   
   // Delete Reservation for Auberge
   async deleteReservationAuberge(reservationId: number) {
     return await this.prisma.reservationAuberge.delete({

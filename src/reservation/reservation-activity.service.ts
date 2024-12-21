@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
 import * as bcrypt from 'bcrypt'
-import { ReservationState, ReservationNature, User } from '@prisma/client';
+import { ReservationState, ReservationNature, User, ReservationAuberge, ReservationActivity } from '@prisma/client';
 
 @Injectable()
 export class ReservationService {
@@ -78,6 +78,48 @@ export class ReservationService {
     });
   }
 
+   async validateReservation(
+     reservationId: number,
+     newState: 'Accepted' | 'Rejected',
+   ): Promise<ReservationActivity> {
+     // Fetch the reservation
+     const reservation = await this.prisma.reservationAuberge.findUnique({
+       where: { reservationId },
+     });
+   
+     if (!reservation) {
+       throw new NotFoundException(`Reservation with ID ${reservationId} not found.`);
+     }
+   
+     // Use switch to handle state validation and transition
+     switch (reservation.reservationState) {
+       case ReservationState.pending:
+          let state 
+         if (newState === 'Accepted' || newState === 'Rejected') {
+          if(newState === 'Accepted'){
+               state = ReservationState.accepted
+          }else if (newState === 'Rejected'){
+               state = ReservationState.rejected
+          }else
+           return await this.prisma.reservationActivity.update({
+             where: { reservationId },
+             data: {
+               reservationState: newState,
+             },
+           });
+         }
+         throw new ConflictException(`Invalid state transition to "${newState}".`);
+   
+       case ReservationState.accepted:
+       case ReservationState.rejected:
+         throw new ConflictException(
+           `Reservation with ID ${reservationId} is already "${reservation.reservationState}".`,
+         );
+   
+       default:
+         throw new Error('Invalid reservation state.');
+     }
+   }
   // Update reservation state
   async updateUser(id: number, updateData: [string, string]): Promise<{ success: boolean; message: string; data: User | null }> {
      try {
