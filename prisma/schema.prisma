@@ -121,6 +121,23 @@ model Auberge {
   limit Int
   reservations ReservationAuberge[]
 }
+model BlackList {
+  lastName String
+  firstName String
+  dateOfBirth DateTime
+  placeOfBirth String
+  idCard String
+  @@id([idCard])
+}
+model employee{
+  lastName String
+  firstName String
+  dateOfBirth DateTime
+  placeOfBirth String
+  rank String
+  job String
+@@id([lastName,firstName])
+}
 enum ReservationState {
   pending
   accepted 

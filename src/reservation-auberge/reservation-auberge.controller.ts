@@ -12,18 +12,21 @@ import {
      ConflictException,
      NotFoundException,
    } from '@nestjs/common';
-   import { ReservationsAubergeService } from './reservation-auberge.service'; // Adjust import as necessary
-   import { CreateReservationAubergeDto, UpdateReservationAubergeDto } from './reservation-auberge.dto'; // Adjust DTO imports
+   import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+   import { ReservationsAubergeService } from './reservation-auberge.service';
+   import { CreateReservationAubergeDto, UpdateReservationAubergeDto } from './reservation-auberge.dto';
    
+   @ApiTags('Reservations') // Groups all these routes under the 'Reservations' tag in Swagger
    @Controller('reservations')
    export class ReservationController {
      constructor(private readonly reservationAubergeService: ReservationsAubergeService) {}
    
      // Create Reservation for Auberge
      @Post('auberge')
-     async createReservationAuberge(
-       @Body() createReservationData: CreateReservationAubergeDto,
-     ) {
+     @ApiOperation({ summary: 'Create a new reservation for an auberge' })
+     @ApiBody({ type: CreateReservationAubergeDto })
+     @ApiResponse({ status: HttpStatus.CREATED, description: 'Reservation created successfully' })
+     async createReservationAuberge(@Body() createReservationData: CreateReservationAubergeDto) {
        try {
          const createdReservation = await this.reservationAubergeService.createReservationAuberge(createReservationData);
          return {
@@ -38,6 +41,8 @@ import {
    
      // Get all Reservations for Auberge
      @Get('auberge')
+     @ApiOperation({ summary: 'Retrieve all reservations for auberges' })
+     @ApiResponse({ status: HttpStatus.OK, description: 'Reservations fetched successfully' })
      async getAllReservationsAuberge() {
        try {
          const reservations = await this.reservationAubergeService.getAllReservationsAuberge();
@@ -53,6 +58,10 @@ import {
    
      // Get Reservation by ID for Auberge
      @Get('auberge/:reservationId')
+     @ApiOperation({ summary: 'Retrieve a reservation for an auberge by its ID' })
+     @ApiParam({ name: 'reservationId', type: Number, description: 'The ID of the reservation' })
+     @ApiResponse({ status: HttpStatus.OK, description: 'Reservation fetched successfully' })
+     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Reservation not found' })
      async getReservationAubergeById(@Param('reservationId') reservationId: number) {
        try {
          const reservation = await this.reservationAubergeService.getReservationAubergeById(reservationId);
@@ -71,6 +80,12 @@ import {
    
      // Update Reservation for Auberge
      @Patch('auberge/:reservationId')
+     @ApiOperation({ summary: 'Update a reservation for an auberge' })
+     @ApiParam({ name: 'reservationId', type: Number, description: 'The ID of the reservation' })
+     @ApiBody({ type: UpdateReservationAubergeDto })
+     @ApiResponse({ status: HttpStatus.OK, description: 'Reservation updated successfully' })
+     @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Conflict in reservation data' })
+     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Reservation not found' })
      async updateReservationAuberge(
        @Param('reservationId') reservationId: number,
        @Body() updateReservationData: UpdateReservationAubergeDto,
@@ -97,6 +112,10 @@ import {
    
      // Delete Reservation for Auberge
      @Delete('auberge/:reservationId')
+     @ApiOperation({ summary: 'Delete a reservation for an auberge' })
+     @ApiParam({ name: 'reservationId', type: Number, description: 'The ID of the reservation' })
+     @ApiResponse({ status: HttpStatus.OK, description: 'Reservation deleted successfully' })
+     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Reservation not found' })
      async deleteReservationAuberge(@Param('reservationId') reservationId: number) {
        try {
          const deletedReservation = await this.reservationAubergeService.deleteReservationAuberge(reservationId);

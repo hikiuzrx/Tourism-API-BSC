@@ -1,87 +1,113 @@
-import { Controller, Post, Body, Get, Param, Put, Delete, BadRequestException, ConflictException, Patch, NotFoundException, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Patch,
+  Delete,
+  BadRequestException,
+  NotFoundException,
+  Res,
+} from '@nestjs/common';
 import { CreateTouristiquePlaceDto } from './dto/create-touristique-place.dto';
 import { TouristiquePlaceService } from './touristique-places.service';
 import { Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger';
 
+@ApiTags('Touristique Places')
 @Controller('touristique-places')
 export class TouristiquePlaceController {
   constructor(private readonly touristiquePlaceService: TouristiquePlaceService) {}
 
   // Create a new TouristiquePlace
   @Post()
-  async create( @Res() res:Response,@Body() createTouristiquePlaceDto: Prisma.TouristiquePlacesCreateInput) {
+  @ApiOperation({ summary: 'Create a new Touristique Place' })
+  @ApiResponse({ status: 201, description: 'Touristique Place successfully created.' })
+  @ApiResponse({ status: 400, description: 'Failed to create Touristique Place.' })
+  @ApiBody({
+    description: 'Data to create a Touristique Place',
+    type: CreateTouristiquePlaceDto,
+  })
+  async create(
+    @Res() res: Response,
+    @Body() createTouristiquePlaceDto: Prisma.TouristiquePlacesCreateInput,
+  ) {
     try {
-      // Call the create method from the service to create a new place
       const newPlace = await this.touristiquePlaceService.create(createTouristiquePlaceDto);
-
-      // Return the created TouristiquePlace response
-      res.json({newPlace});
+      res.status(201).json({ newPlace });
     } catch (error) {
-      // Handle any error that occurs during the creation
-      throw new BadRequestException('Failed to create TouristiquePlace');
+      throw new BadRequestException('Failed to create Touristique Place');
     }
   }
 
   // Get a specific TouristiquePlace by ID
   @Get(':id')
-  async findOne(
-    @Res() res:Response,
-    @Param('id') id: number) {
+  @ApiOperation({ summary: 'Get a Touristique Place by ID' })
+  @ApiResponse({ status: 200, description: 'Touristique Place retrieved successfully.' })
+  @ApiResponse({ status: 404, description: 'Touristique Place not found.' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID of the Touristique Place' })
+  async findOne(@Res() res: Response, @Param('id') id: number) {
     try {
-      // Call the findOne service method to get the place by ID
       const place = await this.touristiquePlaceService.findOne(id);
-      res.json({place});
+      res.json({ place });
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error; // If the error is a NotFoundException, re-throw it
-      }
-      throw new NotFoundException('TouristiquePlace not found'); // Generic error message
+      throw new NotFoundException('Touristique Place not found');
     }
   }
+
   // Update an existing TouristiquePlace by ID
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a Touristique Place by ID' })
+  @ApiResponse({ status: 200, description: 'Touristique Place updated successfully.' })
+  @ApiResponse({ status: 400, description: 'Failed to update Touristique Place.' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID of the Touristique Place' })
+  @ApiBody({
+    description: 'An array of [field, value] pairs to update the Touristique Place',
+    schema: {
+      type: 'array',
+      items: { type: 'string' },
+      example: ['name', 'Updated Place Name'],
+    },
+  })
   async update(
-    @Param('id') id: number, // Get the ID of the TouristiquePlace from the route
-    @Body() updateData: [string, string], // Expect the updateData as an array (field name and value)
+    @Param('id') id: number,
+    @Body() updateData: [string, string],
   ) {
     try {
-      // Call the update service
-      const updatedTouristiquePlace = await this.touristiquePlaceService.update(id, updateData);
-      return updatedTouristiquePlace;
+      return await this.touristiquePlaceService.update(id, updateData);
     } catch (error) {
-      if (error instanceof ConflictException || error instanceof BadRequestException) {
-        throw error; // If the error is already a ConflictException or BadRequestException, re-throw it
-      }
-      throw new BadRequestException('Unable to update TouristiquePlace'); // Generic error message
+      throw new BadRequestException('Unable to update Touristique Place');
     }
   }
 
   // Delete a TouristiquePlace by ID
   @Delete(':id')
-  async remove(@Param('id') id: number): Promise<void> {
+  @ApiOperation({ summary: 'Delete a Touristique Place by ID' })
+  @ApiResponse({ status: 200, description: 'Touristique Place deleted successfully.' })
+  @ApiResponse({ status: 404, description: 'Touristique Place not found.' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID of the Touristique Place' })
+  async remove(@Param('id') id: number): Promise<{ message: string; id: number }> {
     try {
-      // Call the remove service
       await this.touristiquePlaceService.remove(id);
-      return;
+      return { message: 'Touristique Place deleted successfully', id };
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error; // If the error is a NotFoundException, re-throw it
-      }
-      throw new NotFoundException('Unable to delete TouristiquePlace'); // Generic error message
+      throw new NotFoundException('Unable to delete Touristique Place');
     }
   }
+
+  // Get all Touristique Places
   @Get()
-  async findAll(@Res() res:Response) {
+  @ApiOperation({ summary: 'Get all Touristique Places' })
+  @ApiResponse({ status: 200, description: 'Touristique Places retrieved successfully.' })
+  @ApiResponse({ status: 404, description: 'Failed to fetch Touristique Places.' })
+  async findAll(@Res() res: Response) {
     try {
-      // Call the findAll method from the service to retrieve all places
       const allPlaces = await this.touristiquePlaceService.findAll();
-      
-      // Return the list of TouristiquePlaces
-      res.json({allPlaces});
+      res.json({ allPlaces });
     } catch (error) {
-      // Handle any error that occurs while fetching the places
-      throw new NotFoundException('Failed to fetch TouristiquePlaces');
+      throw new NotFoundException('Failed to fetch Touristique Places');
     }
   }
 }

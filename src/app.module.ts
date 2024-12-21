@@ -13,7 +13,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ReservationService } from './reservation/reservation-activity.service';
 import { ReservationsAubergeService } from './reservation-auberge/reservation-auberge.service';
-import { ReservationAubergeController } from './reservation-auberge/reservation-auberge.controller';
+import { ReservationsAubergeController } from './reservation-auberge/reservation-auberge.service';
 
 @Module({
   imports: [DbModule, UserModule, AuthModule, ClubModule, AubergeModule, AgenceModule, TouristiquePlacesModule, PlanTouristiqueModule, CloudinaryModule],
