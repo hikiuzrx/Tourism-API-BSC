@@ -7,10 +7,17 @@ import { AuthModule } from './auth/auth.module';
 import { ClubModule } from './club/club.module';
 import { AubergeModule } from './auberge/auberge.module';
 import { AgenceModule } from './agence/agence.module';
+import { TouristiquePlacesModule } from './touristique-places/touristique-places.module';
+import { PlanTouristiqueModule } from './plan-touristique/plan-touristique.module';
+import { CloudinaryService } from './cloudinary/cloudinary.service';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ReservationService } from './reservation/reservation-activity.service';
+import { ReservationsAubergeService } from './reservation-auberge/reservation-auberge.service';
+import { ReservationAubergeController } from './reservation-auberge/reservation-auberge.controller';
 
 @Module({
-  imports: [DbModule, UserModule, AuthModule, ClubModule, AubergeModule, AgenceModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [DbModule, UserModule, AuthModule, ClubModule, AubergeModule, AgenceModule, TouristiquePlacesModule, PlanTouristiqueModule, CloudinaryModule],
+  controllers: [AppController, ReservationAubergeController],
+  providers: [AppService, CloudinaryService, ReservationService, ReservationsAubergeService,],
 })
 export class AppModule {}

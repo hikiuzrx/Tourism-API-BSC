@@ -31,17 +31,21 @@ model Club {
   clubAdress String
   email String @unique
   password String
+  image String
   activities Activity[]
   reservations reservationForClub[]
 }
 model TouristiquePlaces {
-  adress String @unique
-  type String
-  title String
-  planId Int?
-  partOf TourismPlan? @relation(fields: [planId],references: [toursimId])
+  id          Int             @id @default(autoincrement())
+  adress      String
   description String
-  @@id([title])
+  title       String
+  type        String
+  planIds     Int[]
+  plans       TourismPlan[] @relation("TouristiquePlacePlans")
+
+
+
 }
 model ReservationActivity {
   reservationId Int @id @default(autoincrement())
@@ -91,6 +95,7 @@ model Agence {
   agenceId Int @id @default(autoincrement())
   agenceName String @unique
   agenceAdress String
+  image String
   email String
   password String
 }
@@ -99,8 +104,9 @@ model TourismPlan {
   title String 
   duration String
   limit Int
+  price Int
   transporatation Boolean
-  placestoVisit TouristiquePlaces[]
+  places      TouristiquePlaces[]  @relation("TouristiquePlacePlans")
   activities Activity[]
 
 }
@@ -108,6 +114,7 @@ model Auberge {
   aubergeId Int @id @default(autoincrement())
   name String @unique 
   adress String
+  image String
   email String
   password String
   number String[]

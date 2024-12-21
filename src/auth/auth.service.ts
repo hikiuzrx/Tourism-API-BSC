@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AgenceService } from 'src/agence/agence.service';
 import { AubergeService } from 'src/auberge/auberge.service';
 import { ClubService } from 'src/club/club.service';
 import { UserService } from 'src/user/user.service';
 import { User, Agence, Auberge, Club, Prisma } from '@prisma/client';
-import { NotFoundError } from 'rxjs';
+import * as bcrypt from 'bcrypt'
 
 type UserPayload = {
   id: number;
@@ -94,21 +94,40 @@ export class AuthService {
     const {accessToken,refreshToken } = await this.generateTokens(payload)
     const {password,...publicClub} = club
     return {publicClub,accessToken,refreshToken}
-  } async aubergeLogin(email:string,pass:string){
-    const auberge:Auberge = await this.aubergeService.retrieveUserByEmail(email)
-    if(!auberge){
-      throw new NotFoundException('no user with this email')
-    }
 
-    const auth = await this.aubergeService.comparePassword(auberge,pass)
-    if(!auth){
-      throw new UnauthorizedException('wrong password')
+  }
+   
+  async aubergeLogin(email: string, pass: string) {
+    const auberge: Auberge = await this.aubergeService.retrieveUserByEmail(email);
+    
+    if (!auberge) {
+      throw new NotFoundException('No user found with this email');
     }
-    const payload:AubergePayload ={id:auberge.aubergeId,role:'auberge'}
-    const {accessToken,refreshToken } = await this.generateTokens(payload)
-    const {password,...publicAuberge} = auberge
-    return {publicAuberge,accessToken,refreshToken}
-  } async AgenceLogin(email:string,pass:string){
+    
+    const isPasswordValid = await bcrypt.compare(pass, auberge.password);
+    
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Incorrect password');
+    }
+    const payload: AubergePayload = { id: auberge.aubergeId, role: 'auberge' };
+  
+    const tokens = await this.generateTokens(payload);
+  
+    // Ensure tokens are returned
+    if (!tokens || !tokens.accessToken || !tokens.refreshToken) {
+      throw new InternalServerErrorException('Token generation failed');
+    }
+  
+    const { accessToken, refreshToken } = tokens;
+    
+    // Exclude password from the returned auberge data
+    const { password, ...publicAuberge } = auberge;
+  
+    return { publicAuberge, accessToken, refreshToken };
+  }
+  
+  
+ async AgenceLogin(email:string,pass:string){
     const agence:Agence = await this.agenceService.retrieveUserByEmail(email)
     if(!agence){
       throw new NotFoundException('no agence with this email')

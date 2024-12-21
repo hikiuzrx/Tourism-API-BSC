@@ -26,8 +26,9 @@ export class AubergeController {
       @Delete(':id')
       async deleteAuberge(
         @Param('id',ParseIntPipe) id:number,
-        @Body() password:string){
+         @Body() password:string ){
           const result = await this.aubergeService.deleteAuberge(id,password)
+          return result
         }
               
 }

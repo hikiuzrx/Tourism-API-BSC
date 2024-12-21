@@ -110,7 +110,7 @@ export class AuthController {
     @Body() body: { email: string; password: string },
   ) {
     const { email, password } = body;
-    if(!email ||!password){
+    if(!email || !password){
      throw new BadRequestException('email is required')
     }
     const authenticationData = await this.authService.aubergeLogin(

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException, Logger, BadRequestException } from '@nestjs/common';
 import { Auberge, Prisma } from '@prisma/client';
 import { DbService } from 'src/db/db.service';
 import * as bcrypt from 'bcrypt';
@@ -101,28 +101,36 @@ export class AubergeService {
   }
 
   // Delete Auberge with password confirmation
-  async deleteAuberge(id: number, password: string): Promise<{ success: boolean, message: string }> {
-    const auberge = await this.dbService.auberge.findUnique({
-      where: { aubergeId: id },
-    });
-
-    if (!auberge) {
-      throw new NotFoundException('Auberge not found');
-    }
-
-    const confirmation = await bcrypt.compare(password, auberge.password);
-    if (confirmation) {
-      await this.dbService.auberge.delete({ where: { aubergeId: id } });
-
-      // Log the deletion
-      logger.log(`Auberge with ID ${id} deleted successfully`);
-
-      return { success: true, message: 'Auberge account deleted successfully' };
-    } else {
-      throw new UnauthorizedException("Incorrect password, you're not authorized to delete this account");
-    }
-  }
-
+  async deleteAuberge(id: number,password:string): Promise<void> {
+     const auberge = await this.dbService.auberge.findUnique({
+       where: { aubergeId: id },
+     });
+   
+     if (!auberge) {
+       throw new NotFoundException(`Auberge with ID ${id} not found`);
+     }
+   
+     console.log('Password:', password); // Log input password
+     console.log('Hash:', auberge.password); // Log stored hash
+   
+     if (!auberge.password) {
+       throw new ConflictException('Auberge does not have a password set');
+     }
+   
+     if (!password) {
+       throw new BadRequestException('Password is required');
+     } 
+   
+      const isMatch = await bcrypt.compare(password, auberge.password);
+     if (!isMatch) {
+       throw new UnauthorizedException('Invalid password');
+     }
+    
+     await this.dbService.auberge.delete({
+       where: { aubergeId:id },
+     });
+   }
+   
   // Get Auberge by ID
   async getAubergeById(id: number): Promise<Auberge> {
     const auberge = await this.dbService.auberge.findUnique({
